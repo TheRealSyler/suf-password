@@ -1,0 +1,26 @@
+{
+  "name": "@suf/password",
+  "version": "0.5.0",
+  "description": "utility functions.",
+  "files": [
+    "lib",
+    "README.md"
+  ],
+  "directories": {
+    "lib": "lib"
+  },
+  "main": "lib/index.js",
+  "scripts": {
+    "prepack": "tsc -b",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Syler",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^3.5.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheRealSyler/sUtils"
+  }
+}

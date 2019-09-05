@@ -1,5 +1,5 @@
 {
-  "name": "@suf/password",
+  "name": "suf-password",
   "version": "0.5.0",
   "description": "utility functions.",
   "files": [
@@ -11,8 +11,7 @@
   },
   "main": "lib/index.js",
   "scripts": {
-    "prepack": "tsc -b",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepack": "tsc -b"
   },
   "author": "Syler",
   "license": "MIT",
@@ -21,6 +20,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/TheRealSyler/sUtils"
-  }
+    "url": "git+https://github.com/TheRealSyler/suf-password.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TheRealSyler/suf-password/issues"
+  },
+  "homepage": "https://github.com/TheRealSyler/suf-password#readme",
+  "dependencies": {}
 }

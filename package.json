@@ -1,7 +1,7 @@
 {
   "name": "suf-password",
   "version": "0.5.0",
-  "description": "utility functions.",
+  "description": "Password Check utility.",
   "files": [
     "lib",
     "README.md"
@@ -11,12 +11,19 @@
   },
   "main": "lib/index.js",
   "scripts": {
-    "prepack": "tsc -b"
+    "prepack": "del ./lib && tsc -b && yarn test && suf",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch --coverage"
   },
   "author": "Syler",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^3.5.2"
+    "@types/jest": "^25.1.4",
+    "jest": "^25.1.0",
+    "suf-cli": "^0.1.1",
+    "ts-jest": "^25.2.1",
+    "ts-lib": "^0.0.5",
+    "typescript": "^3.8.3"
   },
   "repository": {
     "type": "git",
@@ -26,5 +33,26 @@
     "url": "https://github.com/TheRealSyler/suf-password/issues"
   },
   "homepage": "https://github.com/TheRealSyler/suf-password#readme",
-  "dependencies": {}
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "json",
+      "jsx",
+      "node"
+    ],
+    "roots": [
+      "<rootDir>/src"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    }
+  },
+  "dependencies": {
+    "del-cli": "^3.0.0"
+  }
 }

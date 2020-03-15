@@ -18,7 +18,7 @@ const checks: Password.ValidateCheck[] = [
   { type: 'numbers' },
   {
     type: 'custom',
-    customFunc: password => password !== '123456',
+    custom: password => password !== '123456',
     customError: 'password cannot be 123456'
   }
 ];
@@ -45,7 +45,7 @@ Password.ValidateSimple(password); // should meet all the requirements and retur
 ```typescript
 namespace Password {
     /** Defines the properties of a Password.Validate Check  */
-    interface ValidateCheck {
+    interface PasswordCheck {
         /** Type of the check  */
         type: 'custom' | 'numbers' | 'letters' | 'lowercase' | 'uppercase' | 'spaces' | 'symbols' | 'customRegex';
         /**
@@ -60,7 +60,7 @@ namespace Password {
          */
         invertCheck?: boolean;
         /** if the type is **`custom`** then this function will be executed.  */
-        customFunc?: (password: string) => boolean;
+        custom?: (password: string) => boolean;
         /** if the type is **`customRegex`** then this regex will be tested.  */
         customRegex?: RegExp;
         /** if the type is **`custom | customRegex`** then this will be the error the if the check fail's.   */
@@ -95,7 +95,7 @@ namespace Password {
      * @param checks array of checks that will be performed.
      * @param options min and max length and other stuff.
      */
-    function Validate(password: string, checks: ValidateCheck[], options?: ValidateOptions): ValidateReturn;
+    function Validate(password: string, checks: PasswordCheck[], options?: ValidateOptions): ValidateReturn;
     /**
      * The password has to contain an uppercase letter, number and cannot contain any spaces.
      * @param password password or string to check.

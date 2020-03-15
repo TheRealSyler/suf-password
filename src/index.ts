@@ -1,6 +1,6 @@
 export namespace Password {
   /** Defines the properties of a Password.Validate Check  */
-  export interface ValidateCheck {
+  export interface PasswordCheck {
     /** Type of the check  */
     type:
       | 'custom'
@@ -25,7 +25,7 @@ export namespace Password {
     invertCheck?: boolean;
 
     /** if the type is **`custom`** then this function will be executed.  */
-    customFunc?: (password: string) => boolean;
+    custom?: (password: string) => boolean;
 
     /** if the type is **`customRegex`** then this regex will be tested.  */
     customRegex?: RegExp;
@@ -55,6 +55,7 @@ export namespace Password {
     /** array with the additional data about each test. */
     validationData?: { invertCheck: boolean; errType: string }[];
   }
+
   /**
    * Validates a password or other strings with checks that have to be provided in the checks array,
    * if the **`passed`** key of the returned object is true
@@ -66,7 +67,7 @@ export namespace Password {
    */
   export function Validate(
     password: string,
-    checks: ValidateCheck[],
+    checks: PasswordCheck[],
     options: ValidateOptions = { maxLength: 100, minLength: 0, passData: false }
   ): ValidateReturn {
     const errors: string[] = [];
@@ -82,7 +83,7 @@ export namespace Password {
       passed = false;
     }
     for (let i = 0; i < checks.length; i++) {
-      const check = _validateCheck(checks[i], password);
+      const check = validateCheck.call({}, checks[i], password);
       data.push(check.data);
       if (check.err) {
         errors.push(check.err);
@@ -97,6 +98,7 @@ export namespace Password {
       return { passed, errors };
     }
   }
+
   /**
    * The password has to contain an uppercase letter, number and cannot contain any spaces.
    * @param password password or string to check.
@@ -108,170 +110,133 @@ export namespace Password {
       { type: 'spaces', invertCheck: true }
     ]).passed;
   }
-  interface _ValidateHandledRegex {
+  interface CheckRegexReturn {
     errType: 'normal' | 'times';
     passed: boolean;
   }
-  function _validateCheck(
-    check: ValidateCheck,
-    password: string
-  ): { err: string; passed: boolean; data: {} } {
-    let err = undefined;
-    let passed = true;
-    let handled: _ValidateHandledRegex;
-    let data: { invertCheck: boolean; errType: string } = {
-      invertCheck: check.invertCheck,
+
+  type CheckData = {
+    invertCheck: boolean;
+    errType: string;
+  };
+
+  interface ValidateCheckContext {
+    error?: string;
+    passed: boolean;
+    regexMatch: CheckRegexReturn;
+    data: CheckData;
+    password: string;
+    check: PasswordCheck;
+  }
+
+  interface ValidateCheckReturn {
+    err: string;
+    passed: boolean;
+    data: CheckData;
+  }
+
+  function validateCheck(
+    this: ValidateCheckContext,
+    Check: PasswordCheck,
+    Password: string
+  ): ValidateCheckReturn {
+    this.check = Check;
+    this.password = Password;
+    this.error = undefined;
+    this.passed = true;
+    this.data = {
+      invertCheck: this.check.invertCheck,
       errType: undefined
     };
-    switch (check.type) {
-      case 'custom':
-        if (check.customFunc) {
-          passed = check.customFunc(password);
-          err = passed ? undefined : check.customError;
-        } else {
-          err = 'customFunc has to be defined';
-        }
 
-        data.errType = 'custom';
+    switch (this.check.type) {
+      case 'custom':
+        WrapCustomFuncOrCustomRegex.call(this, 'custom');
         break;
       case 'customRegex':
-        if (check.customRegex) {
-          passed = check.customRegex.test(password);
-          if (check.invertCheck) {
-            passed = !passed;
-          }
-          err = passed ? undefined : check.customError;
-        } else {
-          err = 'customRegex has to be defined';
-        }
-
-        data.errType = 'customRegex';
+        WrapCustomFuncOrCustomRegex.call(this, 'customRegex');
         break;
       case 'numbers':
-        handled = _validateHandleRegex(password.match(/\d/g), check.invertCheck, check.times);
-        data.errType = handled.errType;
-        passed = handled.passed;
-        if (check.customError && passed !== true) {
-          err = check.customError;
-        } else if (!passed) {
-          err = _validateHandleErr(
-            handled,
-            check.invertCheck,
-            'password has to contain at least one number',
-            'password cannot contain numbers',
-            `password has to contain ${check.times} or more numbers`,
-            `password cannot contain more than ${check.times} numbers`
-          );
-        }
+        WrapValidateCheckCase.call(this, /\d/g, ['number']);
 
         break;
       case 'letters':
-        handled = _validateHandleRegex(
-          password.match(/[a-z][A-Z]/g),
-          check.invertCheck,
-          check.times
-        );
-        data.errType = handled.errType;
-        passed = handled.passed;
-        if (check.customError && passed !== true) {
-          err = check.customError;
-        } else if (!passed) {
-          err = _validateHandleErr(
-            handled,
-            check.invertCheck,
-            'password has to contain at least one letter',
-            'password cannot contain letters',
-            `password has to contain ${check.times} or more letters`,
-            `password cannot contain more than ${check.times} letters`
-          );
-        }
+        WrapValidateCheckCase.call(this, /[a-z][A-Z]/g, ['letter']);
         break;
       case 'lowercase':
-        handled = _validateHandleRegex(password.match(/[a-z]/g), check.invertCheck, check.times);
-        data.errType = handled.errType;
-        passed = handled.passed;
-        if (check.customError && passed !== true) {
-          err = check.customError;
-        } else if (!passed) {
-          err = _validateHandleErr(
-            handled,
-            check.invertCheck,
-            'password has to contain at least one lowercase letter',
-            'password cannot contain lowercase letters',
-            `password has to contain ${check.times} or more lowercase letters`,
-            `password cannot contain more than ${check.times} lowercase letters`
-          );
-        }
+        WrapValidateCheckCase.call(this, /[a-z]/g, ['lowercase letter']);
 
         break;
       case 'uppercase':
-        handled = _validateHandleRegex(password.match(/[A-Z]/g), check.invertCheck, check.times);
-        data.errType = handled.errType;
-        passed = handled.passed;
-        if (check.customError && passed !== true) {
-          err = check.customError;
-        } else if (!passed) {
-          err = _validateHandleErr(
-            handled,
-            check.invertCheck,
-            'password has to contain at least one uppercase letter',
-            'password cannot contain uppercase letters',
-            `password has to contain ${check.times} or more uppercase letters`,
-            `password cannot contain more than ${check.times} uppercase letters`
-          );
-        }
+        WrapValidateCheckCase.call(this, /[A-Z]/g, ['uppercase letter']);
 
         break;
       case 'spaces':
-        handled = _validateHandleRegex(password.match(/\s/g), check.invertCheck, check.times);
-        data.errType = handled.errType;
-        passed = handled.passed;
-        if (check.customError && passed !== true) {
-          err = check.customError;
-        } else if (!passed) {
-          err = _validateHandleErr(
-            handled,
-            check.invertCheck,
-            'password has to contain at least one space',
-            'password cannot contain spaces',
-            `password has to contain ${check.times} or more spaces`,
-            `password cannot contain more than ${check.times} spaces`
-          );
-        }
+        WrapValidateCheckCase.call(this, /\s/g, ['space']);
 
         break;
       case 'symbols':
-        handled = _validateHandleRegex(
-          password.match(/[`~\!@#\$%\^\&\*\(\)\-_\=\+\[\{\}\]\\\|;:'",<.>\/\?€£¥₹]/g),
-          check.invertCheck,
-          check.times
+        WrapValidateCheckCase.call(
+          this,
+          /[`~\!@#\$%\^\&\*\(\)\-_\=\+\[\{\}\]\\\|;:'",<.>\/\?€£¥₹]/g,
+          'symbol'
         );
-        data.errType = handled.errType;
-        passed = handled.passed;
-        if (check.customError && passed !== true) {
-          err = check.customError;
-        } else if (!passed) {
-          err = _validateHandleErr(
-            handled,
-            check.invertCheck,
-            'password has to contain at least one symbol',
-            'password cannot contain symbols',
-            `password has to contain ${check.times} or more symbols`,
-            `password cannot contain more than ${check.times} symbols`
-          );
-        }
         break;
       default:
-        err = 'checking type not valid';
+        this.error = 'checking type not valid.';
         break;
     }
-    return { err, passed, data };
+    return { err: this.error, passed: this.passed, data: this.data };
   }
-  function _validateHandleRegex(
-    match: RegExpMatchArray,
-    invertCheck: boolean,
-    times: number
-  ): _ValidateHandledRegex {
+
+  function WrapCustomFuncOrCustomRegex(this: ValidateCheckContext, type: 'customRegex' | 'custom') {
+    if (this.check[type]) {
+      this.passed =
+        type === 'custom'
+          ? this.check.custom(this.password)
+          : this.check.customRegex.test(this.password);
+      if (this.check.invertCheck) {
+        this.passed = !this.passed;
+      }
+      this.error = this.passed ? undefined : this.check.customError;
+    } else {
+      this.error = `${type} has to be defined.`;
+    }
+    this.data.errType = type;
+  }
+
+  function WrapValidateCheckCase(this: ValidateCheckContext, regex: RegExp, type: string) {
+    this.regexMatch = checkRegexMatch(
+      this.password.match(regex),
+      this.check.invertCheck,
+      this.check.times
+    );
+
+    this.data.errType = this.regexMatch.errType;
+    this.passed = this.regexMatch.passed;
+    if (this.check.customError && this.passed !== true) {
+      this.error = this.check.customError;
+    } else if (!this.passed) {
+      this.error = validateHandleErr.call(this, type);
+    }
+  }
+
+  function validateHandleErr(this: ValidateCheckContext, type: string): string | undefined {
+    if (!this.regexMatch.passed) {
+      if (this.regexMatch.errType === 'normal') {
+        return this.check.invertCheck
+          ? `password cannot contain ${type}s.`
+          : `password has to contain at least one ${type}.`;
+      } else {
+        return this.check.invertCheck
+          ? `password cannot contain more than ${this.check.times} ${type}s.`
+          : `password has to contain ${this.check.times} or more ${type}s.`;
+      }
+    }
+    return undefined;
+  }
+
+  function checkRegexMatch(match: RegExpMatchArray, invertCheck: boolean, times: number): any {
     if (match === null) {
       return { errType: times ? 'times' : 'normal', passed: invertCheck ? true : false };
     }
@@ -282,22 +247,5 @@ export namespace Password {
       };
     }
     return { errType: 'normal', passed: invertCheck ? match.length < 1 : match.length > 0 };
-  }
-  function _validateHandleErr(
-    handled: _ValidateHandledRegex,
-    invertCheck: boolean,
-    errPos: string,
-    errNeg: string,
-    errTimesPos: string,
-    errTimesNeg: string
-  ): string | undefined {
-    if (!handled.passed) {
-      if (handled.errType === 'normal') {
-        return invertCheck ? errNeg : errPos;
-      } else {
-        return invertCheck ? errTimesNeg : errTimesPos;
-      }
-    }
-    return undefined;
   }
 }

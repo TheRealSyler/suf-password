@@ -7,12 +7,12 @@ test('ValidateSimple', () => {
 });
 
 test('Validate', () => {
-  const checks: Password.ValidateCheck[] = [
+  const checks: Password.PasswordCheck[] = [
     {
       type: 'customRegex',
       customRegex: /123/g,
       invertCheck: true,
-      customError: 'cannot contain 123'
+      customError: 'cannot contain 123.'
     },
     { type: 'uppercase' },
     { type: 'numbers' },
@@ -22,18 +22,18 @@ test('Validate', () => {
     { type: 'lowercase', times: 2 },
     {
       type: 'custom',
-      customFunc: password => password !== '123456',
-      customError: 'password cannot be 123456'
+      custom: password => password !== '123456',
+      customError: 'password cannot be 123456.'
     }
   ];
   expect(Password.Validate('123456', checks)).toStrictEqual({
     errors: [
-      'cannot contain 123',
-      'password has to contain at least one uppercase letter',
-      'password has to contain at least one letter',
-      'password has to contain at least one symbol',
-      'password has to contain 2 or more lowercase letters',
-      'password cannot be 123456'
+      'cannot contain 123.',
+      'password has to contain at least one uppercase letter.',
+      'password has to contain at least one letter.',
+      'password has to contain at least one symbol.',
+      'password has to contain 2 or more lowercase letters.',
+      'password cannot be 123456.'
     ],
     passed: false
   });

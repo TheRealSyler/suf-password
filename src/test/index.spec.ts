@@ -45,7 +45,11 @@ test('Validate', () => {
 
   expect(Password.Validate('Test1234', [], { maxLength: 2 })).toStrictEqual({
     passed: false,
-    errors: ['Password is to long']
+    errors: ['password is to long, has to be less than 2 characters long.']
+  });
+  expect(Password.Validate('Test1234', [], { minLength: 12 })).toStrictEqual({
+    passed: false,
+    errors: ['password is to short, has to be at least 12 characters long.']
   });
   expect(Password.Validate('passData1$', checks, { passData: true })).toStrictEqual({
     passed: true,

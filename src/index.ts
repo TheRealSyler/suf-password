@@ -73,7 +73,12 @@ export namespace Password {
     const data = [];
     let passed = true;
     if (password.length > options.maxLength || password.length < options.minLength) {
-      errors.push(`Password is to ${password.length > options.maxLength ? 'long' : 'short'}`);
+      const isLong = password.length > options.maxLength;
+      errors.push(
+        `password is to ${isLong ? 'long' : 'short'}, has to be ${
+          isLong ? 'less than' : 'at least'
+        } ${isLong ? options.maxLength : options.minLength} characters long.`
+      );
       passed = false;
     }
     for (let i = 0; i < checks.length; i++) {
